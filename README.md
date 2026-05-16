@@ -119,6 +119,14 @@ type:
 The full 36-scenario grid behind the paper's aggregate numbers can be
 regenerated with `pipeline/generate.py`.
 
+## Sample results
+
+[`results-sample/`](results-sample/) holds a browsable slice of experiment
+outputs — 21 runs across the three intervention axes (decision logic,
+cognitive profile, model choice) — so you can inspect the scoring format and
+headline effects without re-running anything. See its
+[README](results-sample/README.md) for the layout.
+
 ## Full results
 
 The complete result set is too large for Git. Upload your own runs to W&B:
