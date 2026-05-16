@@ -1,0 +1,11 @@
+# Multi-model robustness: gpt-4o-mini (basic baseline)
+innocent_prefab: basic__Entity
+adversary_prefab: basic__Entity
+innocent_model: openrouter/openai/gpt-4o-mini
+adversary_model: openrouter/openai/gpt-4o-mini
+gm_model: openrouter/openai/gpt-4o-mini
+engine: sequential
+acting_order: fixed
+gm_prefab: dialogic__GameMaster
+max_steps: 30
+seeds: 3

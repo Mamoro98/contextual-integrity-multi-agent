@@ -1,0 +1,11 @@
+# Multi-model robustness: gemini-3-flash-preview (native API, basic baseline)
+innocent_prefab: basic__Entity
+adversary_prefab: basic__Entity
+innocent_model: google/gemini-3-flash-preview
+adversary_model: google/gemini-3-flash-preview
+gm_model: google/gemini-3-flash-preview
+engine: sequential
+acting_order: fixed
+gm_prefab: dialogic__GameMaster
+max_steps: 30
+seeds: 3

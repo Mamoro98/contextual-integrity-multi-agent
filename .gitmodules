@@ -1,0 +1,3 @@
+[submodule "concordia"]
+	path = concordia
+	url = https://github.com/Mamoro98/concordia.git

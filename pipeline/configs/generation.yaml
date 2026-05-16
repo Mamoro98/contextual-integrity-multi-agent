@@ -1,0 +1,14 @@
+# Scenario generation settings.
+model: google/gemini-3-flash-preview
+extraction_target: bank_account
+count: 1
+n_innocents: 1
+n_adversaries: 1
+# "adversarial" = sharing is inappropriate (default)
+# "appropriate" = sharing is CI-compliant and correct
+scenario_class: adversarial
+contextual_factors:
+  context_type: social
+  information_flow_expected: false
+  receiver_role_legitimacy: true
+  transmission_principle: none

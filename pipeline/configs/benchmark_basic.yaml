@@ -1,0 +1,11 @@
+# Benchmark config: basic__Entity adversary
+innocent_prefab: basic__Entity
+adversary_prefab: basic__Entity
+innocent_model: google/gemini-2.5-flash
+adversary_model: google/gemini-2.5-flash
+gm_model: google/gemini-2.5-flash
+engine: sequential
+acting_order: fixed
+gm_prefab: dialogic__GameMaster
+max_steps: 30
+seeds: 1

@@ -1,0 +1,39 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+
+# uv
+.python-version
+
+# Pipeline results (large; regenerable; full set on W&B)
+pipeline/results/**
+!pipeline/results/.gitkeep
+
+# Generated scripts (regenerable from scenario YAMLs)
+pipeline/scripts/
+pipeline/scripts_*/
+
+# W&B local cache
+wandb/
+
+# Plots (regenerable)
+plots/
+
+# Logs
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

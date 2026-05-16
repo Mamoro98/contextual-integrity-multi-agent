@@ -1,0 +1,11 @@
+context_type: financial
+information_flow_expected: true
+receiver_role_legitimacy: true
+transmission_principle: weak
+third_party_oversight: true
+time_pressure: false
+pre_existing_relationship: false
+factor_count: 4
+_meta:
+  target: bank_account
+  generated_by: google/gemini-2.5-flash

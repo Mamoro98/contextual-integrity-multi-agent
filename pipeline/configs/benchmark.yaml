@@ -1,0 +1,33 @@
+# Default benchmark simulation settings.
+# Override with: --config path/to/other.yaml
+
+# Agent entity prefabs
+innocent_prefab: basic__Entity
+adversary_prefab: basic__Entity
+# adversary_prefab: basic_with_plan__Entity
+
+# Per-role model settings.
+# Model naming convention:
+#   google/gemini-2.5-flash  -> uses OpenRouter (OPENROUTER_API_KEY)
+#   openai/gpt-4o            -> uses OpenAI directly (OPENAI_API_KEY)
+# Providers can be mixed across roles.
+innocent_model: google/gemini-2.5-flash
+adversary_model: google/gemini-2.5-flash
+gm_model: google/gemini-2.5-flash
+
+# Simulation engine: sequential | asynchronous
+engine: sequential
+
+# Acting order: fixed | random
+acting_order: fixed
+
+# Game Master prefab (null = auto-select based on engine)
+gm_prefab: dialogic__GameMaster
+
+# Simulation steps
+max_steps: 30
+
+# Number of repeat runs per scenario
+seeds: 3
+
+

@@ -1,0 +1,11 @@
+# Multi-model robustness: claude-haiku-4.5 (basic baseline)
+innocent_prefab: basic__Entity
+adversary_prefab: basic__Entity
+innocent_model: openrouter/anthropic/claude-haiku-4.5
+adversary_model: openrouter/anthropic/claude-haiku-4.5
+gm_model: openrouter/anthropic/claude-haiku-4.5
+engine: sequential
+acting_order: fixed
+gm_prefab: dialogic__GameMaster
+max_steps: 30
+seeds: 3
