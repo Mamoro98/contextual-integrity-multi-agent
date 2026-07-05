@@ -1,7 +1,7 @@
 [project]
-name = "embedded-adversarial"
+name = "contextual-integrity-multi-agent"
 version = "0.1.0"
-description = "Investigating adversarial exploitation in multi-agent LLM systems"
+description = "A generative model of contextual integrity: appropriate vs. inappropriate information sharing in multi-actor LLM systems"
 requires-python = ">=3.12"
 dependencies = [
     "openai>=1.0",

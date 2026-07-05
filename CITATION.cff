@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software or the accompanying paper, please cite it as below."
+title: "A Generative Model of Contextual Integrity: Appropriate vs. Inappropriate Information Sharing in Multi-Actor LLM Systems"
+authors:
+  - family-names: Ebead
+    given-names: "Omer Kamal Ali"
+    affiliation: "Cooperative AI Research Fellowship"
+  - family-names: Formanek
+    given-names: Claude
+    affiliation: "AI Safety South Africa"
+  - family-names: Leibo
+    given-names: "Joel Z."
+    affiliation: "Google DeepMind"
+year: 2026
+url: "https://github.com/Mamoro98/contextual-integrity-multi-agent"
+license: MIT
+preferred-citation:
+  type: article
+  title: "A Generative Model of Contextual Integrity: Appropriate vs. Inappropriate Information Sharing in Multi-Actor LLM Systems"
+  authors:
+    - family-names: Ebead
+      given-names: "Omer Kamal Ali"
+    - family-names: Formanek
+      given-names: Claude
+    - family-names: Leibo
+      given-names: "Joel Z."
+  year: 2026
+  # eprint / arXiv id: fill in once assigned

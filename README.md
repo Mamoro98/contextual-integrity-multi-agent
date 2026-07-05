@@ -22,7 +22,7 @@
 > CI-grounded policy and institution design.
 
 **Paper:** see the [latest GitHub release](https://github.com/Mamoro98/contextual-integrity-multi-agent/releases) for the PDF. arXiv: _TBD_.
-**Authors:** Omer Ebead · Claude Formanek · Joel Z. Leibo
+**Authors:** Omer Kamal Ali Ebead (Cooperative AI Research Fellowship) · Claude Formanek (AI Safety South Africa) · Joel Z. Leibo (Google DeepMind)
 
 ---
 
@@ -58,7 +58,8 @@ git submodule update --init --recursive
 ```
 pipeline/
   benchmark.py            entry point: run a scenario under a benchmark config
-  generate.py             LLM-driven scenario generator
+  generate.py             LLM-driven scenario generator (single cell)
+  generate_grid.py        sweep the full 36-scenario grid
   run_experiment.py       single-run experiment driver
   configs/
     benchmark_*.yaml      6 main conditions + 4 cross-model conditions
@@ -76,7 +77,6 @@ run_fc{0,1,2}_parallel.sh launchers for Type I / II / III adversarial cells
 run_appropriate_parallel.sh launcher for Type IV (appropriate) cells
 upload_results_to_wandb.py  push pipeline/results/ to W&B as an artifact
 concordia/                Concordia fork (git submodule)
-insights/                 experiment notes
 ```
 
 ## Reproducing the paper
@@ -105,8 +105,12 @@ configs in place of `benchmark_basic.yaml`.
 
 ### Scenario set
 
-This repository ships the **5 scenarios named in the paper**, one or more per
-type:
+The paper's aggregate numbers come from a **36-scenario grid** — 3 extraction
+targets (`bank_account`, `ssn`, `address`) × 4 scenario types (I–IV) × 3
+scenarios each. The full grid ships in `pipeline/configs/scenarios/` and
+`pipeline/configs/scenarios_appropriate/`.
+
+The 5 scenarios named in the paper are hand-authored:
 
 | Scenario | Type | Target |
 |---|---|---|
@@ -116,8 +120,12 @@ type:
 | `defense_contractor_vetting_ssn` | III | SSN |
 | `university_stipend_enrollment_bank_account` | IV | bank account |
 
-The full 36-scenario grid behind the paper's aggregate numbers can be
-regenerated with `pipeline/generate.py`.
+The rest are LLM-generated (Gemini 3 Flash) and validated by the 11-step chain.
+Regenerate the full grid — skipping cells already populated — with:
+
+```bash
+uv run python pipeline/generate_grid.py
+```
 
 ## Sample results
 
@@ -140,9 +148,9 @@ Published W&B project: _TBD_.
 ## Citation
 
 ```bibtex
-@article{ebead2026contextualintegrity,
-  title         = {A Generative Model of Contextual Integrity: Appropriate vs. Inappropriate Information Sharing},
-  author        = {Ebead, Omer and Formanek, Claude and Leibo, Joel Z.},
+@article{kamal2026contextualintegrity,
+  title         = {A Generative Model of Contextual Integrity: Appropriate vs. Inappropriate Information Sharing in Multi-Actor LLM Systems},
+  author        = {Ebead, Omer Kamal Ali and Formanek, Claude and Leibo, Joel Z.},
   year          = {2026},
   eprint        = {TBD},
   archivePrefix = {arXiv},
