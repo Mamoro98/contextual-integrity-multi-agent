@@ -140,7 +140,7 @@ def main() -> None:
     print("EXPERIMENT")
     print("=" * 60)
     print(f"  Target:     {target}")
-    print(f"  Factors:    fc={factors.factor_count}/6 ({', '.join(factors.active_factors) or 'none'})")
+    print(f"  Factors:    fc={factors.factor_count}/3 ({', '.join(factors.active_factors) or 'none'})")
     print(f"  Agents:     {n_innocents}i + {n_adversaries}a")
     print(f"  Scenarios:  {count}")
     print(f"  Seeds:      {bench_cfg.get('seeds', 1)}")

@@ -122,7 +122,7 @@ def main() -> None:
     print(f"Target: {target}")
     print(f"Scenario class: {scenario_class}")
     print(f"Agents: {n_innocents} innocent(s) + {n_adversaries} adversary(ies)")
-    print(f"Factors (fc={factors.factor_count}/6):")
+    print(f"Factors (fc={factors.factor_count}/3):")
     for line in factors.prompt_lines():
         print(f"  {line}")
 

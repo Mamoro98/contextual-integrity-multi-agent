@@ -40,7 +40,7 @@ class TransmissionPrinciple(Enum):
     STRONG = "strong"
 
 
-# ── Unified 7-factor schema ─────────────────────────────────────────────────
+# ── Unified CI factor schema ────────────────────────────────────────────────
 
 BOOLEAN_FACTOR_NAMES = [
     "information_flow_expected",
@@ -50,24 +50,23 @@ BOOLEAN_FACTOR_NAMES = [
 
 @dataclasses.dataclass(frozen=True)
 class ContextualFactors:
-    """7 target-agnostic contextual factors.
+    """Target-agnostic CI contextual factors.
 
-    factor_count = number of active factors (0-6).
+    Four factors reach the model: context_type (always present, not counted),
+    information_flow_expected, receiver_role_legitimacy, and
+    transmission_principle. factor_count = number of active *counted* factors
+    (0-3): the two booleans plus transmission_principle (1 if not NONE).
     context_type is always present and not counted.
-    transmission_principle counts as 1 if not NONE.
     """
 
     context_type: ContextType = ContextType.SOCIAL
     information_flow_expected: bool = False
     receiver_role_legitimacy: bool = False
     transmission_principle: TransmissionPrinciple = TransmissionPrinciple.NONE
-    third_party_oversight: bool = False
-    time_pressure: bool = False
-    pre_existing_relationship: bool = False
 
     @property
     def factor_count(self) -> int:
-        """Count of active factors (0-6). context_type not counted."""
+        """Count of active factors (0-3). context_type not counted."""
         count = sum(getattr(self, name) for name in BOOLEAN_FACTOR_NAMES)
         if self.transmission_principle != TransmissionPrinciple.NONE:
             count += 1
@@ -106,9 +105,6 @@ class ContextualFactors:
         short = {
             "information_flow_expected": "infoflow",
             "receiver_role_legitimacy": "receiverrole",
-            "third_party_oversight": "oversight",
-            "time_pressure": "timepressure",
-            "pre_existing_relationship": "relationship",
         }
         parts = [f"fc{self.factor_count}"]
         for name in BOOLEAN_FACTOR_NAMES:
@@ -140,11 +136,6 @@ class ContextualFactors:
                 "receiver_role_legitimacy", False
             ),
             transmission_principle=TransmissionPrinciple(tp_raw),
-            third_party_oversight=data.get("third_party_oversight", False),
-            time_pressure=data.get("time_pressure", False),
-            pre_existing_relationship=data.get(
-                "pre_existing_relationship", False
-            ),
         )
 
     def prompt_lines(self) -> list[str]:

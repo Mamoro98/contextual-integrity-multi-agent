@@ -56,11 +56,6 @@ TARGETS = ["bank_account", "ssn", "address"]
 #   IV  (fc3): context OK, role OK, tp-strong, appropriate -> share
 # context_type does not affect the output folder (only factor_count does); a
 # small per-type rotation is used to diversify the generated scenarios.
-COMMON = dict(
-    third_party_oversight=False,
-    time_pressure=False,
-    pre_existing_relationship=False,
-)
 TYPES = {
     "I": dict(
         scenario_class="adversarial",
@@ -108,7 +103,6 @@ def main() -> None:
                 factors = ContextualFactors.from_dict({
                     "context_type": context_type,
                     **spec["factors"],
-                    **COMMON,
                 })
                 existing = scan_existing_scenarios(
                     target, factors.folder_name, scenario_class,

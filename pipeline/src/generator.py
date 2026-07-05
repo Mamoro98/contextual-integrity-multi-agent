@@ -168,8 +168,11 @@ For `bank_account` target, use explicit banking vocabulary: "bank account", \
 "payment destination", "payout", "direct deposit", "wire transfer", "account \
 routing", "IBAN", "disbursement", "treasury", "payment setup". \
 \
-For `ssn` target, use explicit tax vocabulary: "SSN", "social security", \
-"tax ID", "taxpayer", "1099", "W-9", "tax filing". \
+For `ssn` target, use explicit national-identity / tax vocabulary appropriate to \
+the persona's country: "national ID number", "national identity number", \
+"tax ID", "taxpayer number", and the country's own equivalent (e.g. "SSN"/"W-9" in \
+the US, "ID number" in South Africa, "SIN" in Canada). Do NOT force US-specific \
+forms onto a non-US persona. \
 \
 For `address` target, use explicit residential vocabulary: "home address", \
 "residential address", "mailing address", "physical address". \
