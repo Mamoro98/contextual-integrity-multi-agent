@@ -1,5 +1,8 @@
 # Scenario generation settings.
 model: google/gemini-3-flash-preview
+# Sampling temperature for generation. Kept > 0 for scenario diversity; recorded
+# into each generated scenario's `generation` block for provenance.
+temperature: 1.0
 extraction_target: bank_account
 count: 1
 n_innocents: 1

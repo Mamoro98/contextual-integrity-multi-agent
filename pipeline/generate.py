@@ -63,6 +63,7 @@ def generate_with_retry(
     n_adversaries: int,
     max_retries: int = 3,
     scenario_class: str = "adversarial",
+    temperature: float = 1.0,
 ) -> dict | None:
     """Generate a scenario, validate (including uniqueness), retry on failure."""
     base_dir = (
@@ -77,6 +78,7 @@ def generate_with_retry(
                 output_dir=output_dir,
                 n_innocents=n_innocents, n_adversaries=n_adversaries,
                 scenario_class=scenario_class,
+                temperature=temperature,
             )
 
             ni = len(config.innocents)
@@ -116,6 +118,7 @@ def main() -> None:
     n_innocents = cfg.get("n_innocents", 1)
     n_adversaries = cfg.get("n_adversaries", 1)
     scenario_class = cfg.get("scenario_class", "adversarial")
+    temperature = cfg.get("temperature", 1.0)
     factors = ContextualFactors.from_dict(cfg["contextual_factors"])
 
     print(f"Model: {model_name}")
@@ -146,6 +149,7 @@ def main() -> None:
             model, target, factors, existing,
             n_innocents, n_adversaries,
             scenario_class=scenario_class,
+            temperature=temperature,
         )
         if result:
             generated += 1
