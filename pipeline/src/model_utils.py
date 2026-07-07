@@ -15,6 +15,7 @@ import datetime
 import json
 import os
 import sys
+import time
 from collections.abc import Collection
 from pathlib import Path
 
@@ -239,18 +240,31 @@ class GeminiLanguageModel(language_model.LanguageModel):
             },
         }
         effective_timeout = max(float(timeout), self._LONG_TIMEOUT)
-        try:
-            r = httpx.post(
-                url,
-                headers={"x-goog-api-key": self._api_key, "content-type": "application/json"},
-                json=payload,
-                timeout=effective_timeout,
-            )
-            r.raise_for_status()
-            data = r.json()
-        except Exception as exc:
-            print(f"[GeminiLanguageModel] API error: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
-            raise
+        _RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+        _MAX_ATTEMPTS = 5
+        data = None
+        for _attempt in range(1, _MAX_ATTEMPTS + 1):
+            try:
+                r = httpx.post(
+                    url,
+                    headers={"x-goog-api-key": self._api_key, "content-type": "application/json"},
+                    json=payload,
+                    timeout=effective_timeout,
+                )
+                r.raise_for_status()
+                data = r.json()
+                break
+            except (httpx.HTTPStatusError, httpx.TransportError) as exc:
+                _status = getattr(getattr(exc, "response", None), "status_code", None)
+                _retryable = isinstance(exc, httpx.TransportError) or (_status in _RETRYABLE_STATUS)
+                if _retryable and _attempt < _MAX_ATTEMPTS:
+                    _delay = min(2 ** _attempt, 30)
+                    print(f"[GeminiLanguageModel] transient error ({type(exc).__name__} {_status}); "
+                          f"retry {_attempt}/{_MAX_ATTEMPTS - 1} in {_delay}s", file=sys.stderr, flush=True)
+                    time.sleep(_delay)
+                    continue
+                print(f"[GeminiLanguageModel] API error: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
+                raise
         candidates = data.get("candidates", [])
         if not candidates:
             return ""
@@ -457,19 +471,32 @@ class GeminiLanguageModel(language_model.LanguageModel):
             },
         }
         effective_timeout = max(float(timeout), self._LONG_TIMEOUT)
-        try:
-            r = _httpx.post(
-                url,
-                headers={"x-goog-api-key": self._api_key, "content-type": "application/json"},
-                json=payload,
-                timeout=effective_timeout,
-            )
-            r.raise_for_status()
-            data = r.json()
-        except Exception as exc:
-            import sys as _sys
-            print(f"[GeminiLanguageModel] API error: {type(exc).__name__}: {exc}", file=_sys.stderr, flush=True)
-            raise
+        import sys as _sys
+        import time as _time
+        _RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+        _MAX_ATTEMPTS = 5
+        data = None
+        for _attempt in range(1, _MAX_ATTEMPTS + 1):
+            try:
+                r = _httpx.post(
+                    url,
+                    headers={"x-goog-api-key": self._api_key, "content-type": "application/json"},
+                    json=payload,
+                    timeout=effective_timeout,
+                )
+                r.raise_for_status()
+                data = r.json()
+                break
+            except (_httpx.HTTPStatusError, _httpx.TransportError) as exc:
+                _status = getattr(getattr(exc, "response", None), "status_code", None)
+                _retryable = isinstance(exc, _httpx.TransportError) or (_status in _RETRYABLE_STATUS)
+                if _retryable and _attempt < _MAX_ATTEMPTS:
+                    _delay = min(2 ** _attempt, 30)
+                    print(f"[GeminiLanguageModel] transient error ({type(exc).__name__} {_status}); retry {_attempt}/{_MAX_ATTEMPTS - 1} in {_delay}s", file=_sys.stderr, flush=True)
+                    _time.sleep(_delay)
+                    continue
+                print(f"[GeminiLanguageModel] API error: {type(exc).__name__}: {exc}", file=_sys.stderr, flush=True)
+                raise
         candidates = data.get("candidates", [])
         if not candidates:
             return ""
