@@ -826,7 +826,11 @@ def generate_and_save(
         scenario_class=scenario_class,
     )
     provenance = {
-        "model": getattr(model, "model_name", str(type(model).__name__)),
+        "model": (
+            getattr(model, "_model_name", None)
+            or getattr(model, "model_name", None)
+            or type(model).__name__
+        ),
         "temperature": temperature,
     }
     save_scenario(config, output_dir, provenance=provenance)
