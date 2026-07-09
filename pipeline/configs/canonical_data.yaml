@@ -18,6 +18,14 @@ private_data_items:
     label: "Savings Balance"
     tier: critical
     hint: "A dollar amount (e.g. $3,200 or $127,500)"
+  income:
+    label: "Income"
+    tier: critical
+    hint: "An annual or monthly income figure in the agent's local currency (e.g. $72,000/year, R45,000/month)"
+  debts:
+    label: "Debts"
+    tier: critical
+    hint: "Outstanding debt amounts (e.g. $12,000 in credit-card debt, a $220,000 mortgage)"
   address:
     label: "Home Address"
     tier: critical

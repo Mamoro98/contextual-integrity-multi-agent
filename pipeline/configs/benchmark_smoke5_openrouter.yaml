@@ -1,0 +1,11 @@
+# 5-step smoke test, gemini-2.5-flash via OpenRouter (fast, few calls)
+innocent_prefab: basic__Entity
+adversary_prefab: basic__Entity
+innocent_model: openrouter/google/gemini-2.5-flash
+adversary_model: openrouter/google/gemini-2.5-flash
+gm_model: openrouter/google/gemini-2.5-flash
+engine: sequential
+acting_order: fixed
+gm_prefab: dialogic__GameMaster
+max_steps: 5
+seeds: 1
