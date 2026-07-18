@@ -1,0 +1,11 @@
+# Generation settings for the shared-context scenario generator.
+model: "openrouter/google/gemini-2.5-flash"
+# Temperature for the creative layers (vignette + scenario dressing).
+# Layer 3 (target extraction) always runs at 0.
+temperature: 0.7
+# Surgery-kit refine loop: max attempts to rewrite a vignette/scenario that
+# violates the banned-word (anti-priming) gate.
+max_refine_tries: 2
+# Conversation lengths written into the final scenario.
+steps_a: 15
+steps_b: 15
