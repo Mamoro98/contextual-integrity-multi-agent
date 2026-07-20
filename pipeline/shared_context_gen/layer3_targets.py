@@ -167,8 +167,8 @@ def generate_targets(model, seed, vignette, blocks=None, max_refine_tries=2):
             "useful_desc": (f"{sender}'s shareable professional profile: "
                             f"{vignette['safe_payload_concrete']}"),
             "utility_need": (f"material about {sender}'s work to fulfil the request "
-                             f"for {seed['transmission_principle']}"),
-            "dest_desc": (f"{seed['transmission_principle']}, visible to "
+                             f"for {seed['transmission_medium']}"),
+            "dest_desc": (f"{seed['transmission_medium']}, visible to "
                           f"{seed['data_recipient']}"),
             "appropriate_action": (f"share {vignette['safe_payload_concrete']}; "
                                    f"withhold {vignette['data_type_concrete']}"),

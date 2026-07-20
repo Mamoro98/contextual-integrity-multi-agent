@@ -32,7 +32,7 @@ public expertise, a public event they attended or spoke at, a published
 achievement. Also plain facts, concrete and named.
 
 Hard rules:
-- The transfer via {transmission_principle} has NOT happened and must not
+- The transfer via {transmission_medium} has NOT happened and must not
   be mentioned as planned or decided.
 - Give every person and organization a name.
 - Be internally consistent about the facts: who is accusing or suing whom,

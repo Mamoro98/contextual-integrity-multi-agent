@@ -32,12 +32,16 @@ def extract_json(text):
     Tolerates markdown fences and stray prose around the object.
     Raises ValueError if nothing parseable is found.
     """
+    # extract only the json {} --> in regex {} means repitition
+    # a{3} == aaa. so bracetes must be escaped with \{ and \} 
+    # .* means anything. So all means { everything inside } --> 
+    # this is how to get the json file
     m = re.search(r"\{.*\}", text, re.DOTALL)
     if not m:
         raise ValueError(f"no JSON object in LLM reply: {text[:200]!r}")
     return json.loads(m.group(0))
 
-
+# temp = 0.7 because we are trying to invent things (names, stories..etc)
 def sample_json(model, prompt, max_tokens=1500, temperature=0.7, tries=3):
     """Call the model until it returns parseable JSON (up to `tries`)."""
     last_err = None

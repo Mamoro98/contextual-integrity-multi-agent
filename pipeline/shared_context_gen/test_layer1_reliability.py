@@ -7,13 +7,13 @@ Usage:  python test_layer1_reliability.py [N] [seed_file]
 import json
 import sys
 from pathlib import Path
-
+# skip emojies and unprintable chars 
 for _s in (sys.stdout, sys.stderr):
     try:
         _s.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
-
+# to make the script imports work from anywhere
 HERE = Path(__file__).resolve().parent
 PIPELINE = HERE.parent
 REPO = PIPELINE.parent
@@ -28,17 +28,21 @@ load_dotenv(REPO / ".env")
 from src.model_utils import setup_model
 from common import find_banned_words
 from layer1_vignette import generate_vignette
-
-N = int(sys.argv[1]) if len(sys.argv) > 1 else 5
+# load the arguments
+# argv = [test_layer1_reliability.py, N, seed_file]
+# how many times the vignette generator should be run on the same seed
+N = int(sys.argv[1]) if len(sys.argv) > 1 else 5 
+# which seed file to use (in pipeline/shared_context_gen/)
 SEED_FILE = sys.argv[2] if len(sys.argv) > 2 else "seed.yaml"
-
+# load the seed file
 seed_doc = yaml.safe_load((HERE / SEED_FILE).read_text(encoding="utf-8"))
 print("seed file:", SEED_FILE)
+# load the generation configs
 cfg = yaml.safe_load((HERE / "gen_config.yaml").read_text(encoding="utf-8"))
 seed = seed_doc["seed"]
 requester_role = seed_doc["recast"]["requester_role"]
 model = setup_model(cfg["model"])
-
+# concrete here means the actual values are used now 
 SLOTS = ["data_type_concrete", "data_subject_concrete", "data_sender_concrete",
          "data_recipient_concrete", "requester_concrete", "safe_payload_concrete"]
 
@@ -47,47 +51,47 @@ def check_vignette(v):
     """Mechanical checks. Returns list of failure strings (empty = pass)."""
     fails = []
     story = v.get("story", "")
-
+    # check 1 --> all slots must exist
     for slot in SLOTS:
         if not str(v.get(slot, "")).strip():
             fails.append(f"empty slot: {slot}")
-
+    # check 2 --> story must not contain banned words 
     if find_banned_words(story):
         fails.append(f"banned words in story: {find_banned_words(story)}")
 
-    # full names: requester and sender need first + last
+    # check 3 --> full names: requester and sender need first + last
     for slot in ("requester_concrete", "data_sender_concrete"):
         name = str(v.get(slot, "")).strip()
         if name and len(name.split()) < 2:
             fails.append(f"{slot} not a full name: {name!r}")
 
-    # sender's given first name must be kept
+    # check 4 --> sender's given first name must be kept
     if seed["data_sender_name"].lower() not in str(v.get("data_sender_concrete", "")).lower():
         fails.append(f"sender lost the seed first name ({seed['data_sender_name']})")
 
-    # subject must be a SINGLE entity: no commas/parentheses, short
+    # check 5 --> subject must be a SINGLE entity: no commas/parentheses, short
     subj = str(v.get("data_subject_concrete", "")).strip()
     if "," in subj or "(" in subj or len(subj.split()) > 5:
         fails.append(f"subject is not a single clean entity: {subj!r}")
 
-    # subject + requester full values must appear verbatim in the story
+    # check 6 --> subject + requester full values must appear verbatim in the story
     for slot in ("data_subject_concrete", "requester_concrete"):
         val = str(v.get(slot, "")).strip()
         if val and val.lower() not in story.lower():
             fails.append(f"{slot} ({val}) not found verbatim in story text")
 
-    # matter_entities must be a non-empty list of strings
+    # check 7 --> matter_entities must be a non-empty list of strings
     ents = v.get("matter_entities")
     if not isinstance(ents, list) or not ents:
         fails.append(f"matter_entities missing or empty: {ents!r}")
 
-    # noun-phrase slots must be things, not sentences (template composability)
+    # check 8 --> noun-phrase slots must be things, not sentences (template composability)
     for slot in ("data_type_concrete", "safe_payload_concrete"):
         val = str(v.get(slot, "")).strip()
         if val.split() and val.split()[0].lower() in ("he", "she", "they", "it"):
             fails.append(f"{slot} is a sentence, not a noun phrase: {val[:60]!r}")
 
-    # sentence-4 richness: at least 3 capitalized multiword entities overall
+    # check 9 -->sentence-4 richness: at least 3 capitalized multiword entities overall -->ensures richness
     import re
     entities = set(re.findall(r"[A-Z][a-zA-Z]+(?: [A-Z][a-zA-Z&.']+)+", story))
     if len(entities) < 4:
