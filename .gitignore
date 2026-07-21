@@ -39,5 +39,5 @@ plots/
 Thumbs.db
 
 # experiment outputs -- keep local, never push
-pipeline/shared_context_mvp_results/
-pipeline/shared_context_gen/out/
+pipeline/shared_context_pipeline/results/
+pipeline/shared_context_pipeline/generation/scenarios/

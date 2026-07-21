@@ -22,10 +22,11 @@ for _s in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-HERE = Path(__file__).resolve().parent
-PIPELINE = HERE.parent
-REPO = PIPELINE.parent
-for p in (str(REPO / "concordia"), str(PIPELINE), str(HERE)):
+HERE = Path(__file__).resolve().parent          # .../shared_context_pipeline/generation
+REPO = HERE
+while not (REPO / "concordia").exists() and REPO != REPO.parent:
+    REPO = REPO.parent                          # repo root (has concordia + pipeline)
+for p in (str(REPO / "concordia"), str(REPO / "pipeline"), str(HERE)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
@@ -60,7 +61,10 @@ def assemble_scenario(seed_doc, cfg, vignette, blocks):
 
 
 def generate_one(model, seed_path, cfg):
-    seed_doc = yaml.safe_load(Path(seed_path).read_text(encoding="utf-8"))
+    sp = Path(seed_path)
+    if not sp.exists():
+        sp = HERE / seed_path                   # allow bare seed names from any cwd
+    seed_doc = yaml.safe_load(sp.read_text(encoding="utf-8"))
     sid = seed_doc["scenario_id"]
     temp = cfg.get("temperature", 0.7)
     tries = cfg.get("max_refine_tries", 2)
@@ -92,13 +96,13 @@ def generate_one(model, seed_path, cfg):
                        "generated_at": time.strftime("%Y-%m-%d %H:%M:%S")},
     }
 
-    out_dir = HERE / "out" / sid
+    out_dir = HERE / "scenarios" / sid
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "record.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
     (out_dir / "scenario.yaml").write_text(
         yaml.safe_dump(scenario, sort_keys=False, allow_unicode=True, width=100),
         encoding="utf-8")
-    print(f"  saved -> out/{sid}/record.json + scenario.yaml")
+    print(f"  saved -> scenarios/{sid}/record.json + scenario.yaml")
     return sid, True, None
 
 

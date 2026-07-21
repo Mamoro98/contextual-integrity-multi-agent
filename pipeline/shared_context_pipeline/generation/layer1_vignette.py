@@ -68,23 +68,77 @@ Respond with ONLY a JSON object: {{"story": "<rewritten story>"}}
 """
 
 
-def generate_vignette(model, seed, requester_role, temperature=0.7, max_refine_tries=2):
-    """Run Layer 1. Returns the vignette dict (with refine bookkeeping)."""
-    prompt = VIGNETTE_PROMPT.format(**seed, requester_role=requester_role)
-    vignette = sample_json(model, prompt, max_tokens=1200, temperature=temperature)
+def check_vignette(v, seed):
+    """Mechanical checks on a vignette (moved from the old reliability
+    harness so Layer 1 self-checks and retries like Layer 2).
+    Returns list of problem strings (empty = pass)."""
+    problems = []
+    story = v.get("story", "")
 
-    # Surgery-Kit gate: banned-word check + refine loop (PrivacyLens pattern).
-    vignette["refine_round"] = 0
-    bad = find_banned_words(vignette.get("story", ""))
-    while bad and vignette["refine_round"] < max_refine_tries:
-        vignette.setdefault("story_before_refinement", vignette["story"])
-        fixed = sample_json(
-            model,
-            REFINE_PROMPT.format(bad_words=bad, story=vignette["story"]),
-            max_tokens=1200, temperature=0.0)
-        vignette["story"] = fixed["story"]
-        vignette["refine_round"] += 1
-        bad = find_banned_words(vignette["story"])
-    if bad:
-        raise RuntimeError(f"vignette still contains banned words after refine: {bad}")
-    return vignette
+    slots = ["data_type_concrete", "data_subject_concrete", "data_sender_concrete",
+             "data_recipient_concrete", "requester_concrete", "safe_payload_concrete"]
+    for slot in slots:
+        if not str(v.get(slot, "")).strip():
+            problems.append(f"empty slot: {slot}")
+
+    for slot in ("requester_concrete", "data_sender_concrete"):
+        name = str(v.get(slot, "")).strip()
+        if name and len(name.split()) < 2:
+            problems.append(f"{slot} not a full name: {name!r}")
+
+    if seed["data_sender_name"].lower() not in str(v.get("data_sender_concrete", "")).lower():
+        problems.append(f"sender lost the seed first name ({seed['data_sender_name']})")
+
+    subj = str(v.get("data_subject_concrete", "")).strip()
+    if "," in subj or "(" in subj or len(subj.split()) > 5:
+        problems.append(f"subject is not a single clean entity: {subj!r}")
+
+    for slot in ("data_subject_concrete", "requester_concrete"):
+        val = str(v.get(slot, "")).strip()
+        if val and val.lower() not in story.lower():
+            problems.append(f"{slot} ({val}) not found verbatim in story text")
+
+    ents = v.get("matter_entities")
+    if not isinstance(ents, list) or not ents:
+        problems.append(f"matter_entities missing or empty: {ents!r}")
+
+    for slot in ("data_type_concrete", "safe_payload_concrete"):
+        val = str(v.get(slot, "")).strip()
+        if val.split() and val.split()[0].lower() in ("he", "she", "they", "it"):
+            problems.append(f"{slot} is a sentence, not a noun phrase: {val[:60]!r}")
+
+    return problems
+
+
+def generate_vignette(model, seed, requester_role, temperature=0.7, max_refine_tries=2):
+    """Run Layer 1 with embedded checks: generate -> banned-word gate (with
+    refine) -> mechanical checks -> regenerate with problems on failure."""
+    base_prompt = VIGNETTE_PROMPT.format(**seed, requester_role=requester_role)
+    prompt = base_prompt
+    last_problems = None
+    for attempt in range(max_refine_tries + 1):
+        vignette = sample_json(model, prompt, max_tokens=1200, temperature=temperature)
+
+        # banned-word gate + refine loop (repairs wording, keeps facts)
+        vignette["refine_round"] = 0
+        bad = find_banned_words(vignette.get("story", ""))
+        while bad and vignette["refine_round"] < max_refine_tries:
+            vignette.setdefault("story_before_refinement", vignette["story"])
+            fixed = sample_json(
+                model,
+                REFINE_PROMPT.format(bad_words=bad, story=vignette["story"]),
+                max_tokens=1200, temperature=0.0)
+            vignette["story"] = fixed["story"]
+            vignette["refine_round"] += 1
+            bad = find_banned_words(vignette["story"])
+
+        problems = (["banned words survived refining: " + str(bad)] if bad else [])
+        problems += check_vignette(vignette, seed)
+        if not problems:
+            vignette["generation_attempts"] = attempt + 1
+            return vignette
+        last_problems = problems
+        prompt = (base_prompt
+                  + "\n\nYour previous attempt had these problems -- fix them:\n- "
+                  + "\n- ".join(problems))
+    raise RuntimeError(f"Layer 1 failed checks after retries: {last_problems}")

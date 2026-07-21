@@ -29,8 +29,10 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 # --- Paths: import the concordia SUBMODULE fork, not pip gdm-concordia ---
+# Find the repo root by walking up until we see the concordia submodule, so
+# this works regardless of the current working directory.
 REPO = Path.cwd()
-if REPO.name == "pipeline":
+while not (REPO / "concordia").exists() and REPO != REPO.parent:
     REPO = REPO.parent
 CONCORDIA_PATH = str(REPO / "concordia")
 PIPELINE_PATH = str(REPO / "pipeline")
@@ -401,7 +403,7 @@ print("runner ready")
 # (human-readable) and one JSON (machine-readable) transcript per channel.
 import time, uuid
 
-RESULTS_DIR = REPO / "pipeline" / "shared_context_mvp_results"
+RESULTS_DIR = REPO / "pipeline" / "shared_context_pipeline" / "results"
 RUN_ID = time.strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:4]
 RUN_DIR = RESULTS_DIR / f"run_{RUN_ID}"
 RUN_DIR.mkdir(parents=True, exist_ok=True)
