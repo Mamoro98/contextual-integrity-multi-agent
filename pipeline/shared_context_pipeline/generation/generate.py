@@ -9,7 +9,7 @@ Per seed, saves under out/<scenario_id>/:
   record.json    -- one record carrying every layer's output (PrivacyLens
                     pattern: seed + vignette + blocks + metadata)
   scenario.yaml  -- the final scenario, drop-in compatible with
-                    shared_context_mvp.py's SCENARIOS list
+                    simulation.py's SCENARIOS format
 """
 import json
 import sys

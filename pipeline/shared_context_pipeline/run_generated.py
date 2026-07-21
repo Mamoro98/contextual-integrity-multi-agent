@@ -1,16 +1,9 @@
-"""Run a GENERATED scenario.yaml through the shared_context_mvp sim, then
-score it with the LLM judge (judge.py) in the same script.
+"""Run a generated scenario through the simulation, then score it with the
+LLM judge -- one command for the sim + scoring stage of the pipeline.
 
-Usage:  python run_generated.py out/<scenario_id>/scenario.yaml [--no-judge]
-
-Executes shared_context_mvp.py cell by cell in one namespace, but swaps
-SCENARIOS for the loaded YAML scenario just before the Run cell -- so the
-generated scenario goes through the exact same sim + saving code as the
-hand-written one (results land in a run_<ts>_<id> folder as usual). After
-the sim, the LLM judge reads the channel-B assistant lines + the Layer-1
-story and writes verdict.json into the same run folder.
+Usage:  python run_generated.py generation/scenarios/<id>/scenario.yaml [--no-judge] [--seeds N]
 """
-import re
+import json
 import sys
 from pathlib import Path
 
@@ -20,60 +13,52 @@ for _s in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-HERE = Path(__file__).resolve().parent          # .../shared_context_pipeline
-REPO = HERE
-while not (REPO / "concordia").exists() and REPO != REPO.parent:
-    REPO = REPO.parent                          # repo root
+HERE = Path(__file__).resolve().parent            # .../shared_context_pipeline
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
 
-import os
 import yaml
 
-args = [a for a in sys.argv[1:] if not a.startswith("--")]
-NO_JUDGE = "--no-judge" in sys.argv
-if not args:
-    raise SystemExit("usage: python run_generated.py <scenario.yaml> [--no-judge]")
-scenario_path = Path(args[0]).resolve()
-scenario = yaml.safe_load(scenario_path.read_text(encoding="utf-8"))
-print(f"loaded generated scenario: {scenario['id']}")
-print(f"  secret subject: {scenario['target']}   asker: {scenario['asker']}")
-print(f"  secret: {scenario['secret'][:120]}")
+import simulation
+from judge import judge_run, JUDGE_MODEL
 
-# Run from the repo root; the MVP finds paths by walking up to concordia.
-os.chdir(REPO)
 
-mvp_src = (HERE / "shared_context_mvp.py").read_text(encoding="utf-8")
-cells = re.split(r"^# In\[.*\]:\s*$", mvp_src, flags=re.MULTILINE)
+def main():
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    no_judge = "--no-judge" in sys.argv
+    seeds = 1
+    if "--seeds" in sys.argv:
+        seeds = int(sys.argv[sys.argv.index("--seeds") + 1])
+    if not args:
+        raise SystemExit("usage: python run_generated.py <scenario.yaml> [--no-judge] [--seeds N]")
 
-ns = {"__name__": "__main__"}
-for cell in cells:
-    if "# --- Run ---" in cell:
-        print(f"\n[run_generated] overriding SCENARIOS with {scenario['id']}\n")
-        ns["SCENARIOS"] = [scenario]
-    exec(compile(cell, "<mvp-cell>", "exec"), ns)
+    scenario_path = Path(args[0]).resolve()
+    scenario = yaml.safe_load(scenario_path.read_text(encoding="utf-8"))
+    print(f"loaded scenario: {scenario['id']}")
+    print(f"  subject: {scenario['target']}   asker: {scenario['asker']}")
 
-# --- Scoring: LLM judge over the sim we just ran ---
-if not NO_JUDGE:
-    import json
-    sys.path.insert(0, str(HERE))
-    from judge import judge_run, JUDGE_MODEL
+    run_dir, _ = simulation.run([scenario], seeds=seeds)
 
-    run_dir = ns["RUN_DIR"]                       # set by the MVP's Run cell
-    model = ns["setup_model"](JUDGE_MODEL)        # reuse the MVP's setup_model
-    # The two info lists come from the record's clean vignette noun phrases:
-    # confidential = the matter, shareable = the safe payload.
-    vign = json.loads((scenario_path.parent / "record.json").read_text(encoding="utf-8"))["vignette"]
-    secret = vign["data_type_concrete"]
-    safe_payload = vign["safe_payload_concrete"]
+    if not no_judge:
+        # Ground truth = the clean noun phrases from the generation record:
+        # confidential matter + shareable payload.
+        vign = json.loads((scenario_path.parent / "record.json")
+                          .read_text(encoding="utf-8"))["vignette"]
+        judge_model = simulation.setup_model(JUDGE_MODEL)
 
-    print(f"\n[run_generated] judging with {JUDGE_MODEL}\n")
-    for rj in run_dir.glob("*__result.json"):
-        res = json.loads(rj.read_text(encoding="utf-8"))
-        verdict = judge_run(model, secret, safe_payload,
-                            res["assistant_lines_channel_b"])
-        (run_dir / (rj.stem.replace("__result", "") + "__verdict.json")).write_text(
-            json.dumps(verdict, indent=2), encoding="utf-8")
-        print(f"  {rj.stem}: leaked={verdict['leaked']} used={verdict['used_shareable']} "
-              f"-> {verdict['outcome'].upper()}")
-    print(f"  verdicts saved in {run_dir}")
+        print(f"\njudging with {JUDGE_MODEL}")
+        for rj in run_dir.glob("*__result.json"):
+            res = json.loads(rj.read_text(encoding="utf-8"))
+            verdict = judge_run(judge_model, vign["data_type_concrete"],
+                                vign["safe_payload_concrete"],
+                                res["assistant_lines_channel_b"])
+            (run_dir / (rj.stem.replace("__result", "") + "__verdict.json")).write_text(
+                json.dumps(verdict, indent=2), encoding="utf-8")
+            print(f"  {rj.stem}: leaked={verdict['leaked']} used={verdict['used_shareable']} "
+                  f"-> {verdict['outcome'].upper()}")
 
-print("\n[run_generated] done.")
+    print("\ndone.")
+
+
+if __name__ == "__main__":
+    main()
