@@ -65,7 +65,22 @@ def generate_one(model, seed_path, cfg):
     if not sp.exists():
         sp = HERE / seed_path                   # allow bare seed names from any cwd
     seed_doc = yaml.safe_load(sp.read_text(encoding="utf-8"))
-    sid = seed_doc["scenario_id"]
+
+    # requester personality (optional): recast.requester_profile names a
+    # profile from profiles.yaml; baseline = key absent = no persona.
+    profile = seed_doc["recast"].get("requester_profile")
+    profile_memories = None
+    if profile:
+        profiles = yaml.safe_load((HERE / "profiles.yaml").read_text(encoding="utf-8"))
+        available = profiles["requester_profiles"]
+        if profile not in available:
+            raise ValueError(f"unknown requester_profile {profile!r}; "
+                             f"available: {list(available)}")
+        profile_memories = available[profile]
+
+    # profile becomes part of the scenario identity so conditions never collide
+    sid = seed_doc["scenario_id"] + (f"__{profile}" if profile else "")
+    seed_doc["scenario_id"] = sid
     temp = cfg.get("temperature", 0.7)
     tries = cfg.get("max_refine_tries", 2)
     print(f"\n{'=' * 60}\n{sid}  ({seed_path})\n{'=' * 60}")
@@ -77,15 +92,17 @@ def generate_one(model, seed_path, cfg):
     print(f"        subject={vignette['data_subject_concrete']}  "
           f"refine_round={vignette['refine_round']}")
 
-    print("  [2/2] channel blocks...")
+    print(f"  [2/2] channel blocks... (requester_profile: {profile or 'baseline'})")
     blocks, slots = generate_scenario_blocks(model, seed_doc["seed"], vignette,
-                                             temperature=temp, max_refine_tries=tries)
+                                             temperature=temp, max_refine_tries=tries,
+                                             profile_memories=profile_memories)
     print(f"        {blocks['channel_a']['human']} / {blocks['channel_b']['human']}  "
           f"attempts={blocks['generation_attempts']}")
 
     scenario = assemble_scenario(seed_doc, cfg, vignette, blocks)
     record = {
         "scenario_id": sid,
+        "requester_profile": profile or "baseline",
         "seed": seed_doc["seed"],
         "recast": seed_doc["recast"],
         "vignette": vignette,

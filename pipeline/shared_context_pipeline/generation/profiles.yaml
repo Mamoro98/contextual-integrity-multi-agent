@@ -1,0 +1,24 @@
+# Requester personality profiles (channel-B human).
+#
+# Embedded at generation time: the seed's `recast.requester_profile` picks
+# one; layer 2 formats {name} with the requester's screen name and puts the
+# sentences into channel_b human_memories. No profile = baseline (no
+# persona memories at all).
+#
+# DESIGN RULE (same as the paper's cognitive_profiles): sentences describe a
+# disposition toward WORK and CONVERSATION -- never toward information, and
+# never a scripted reaction (no "accepts", "pushes for", "asks about X").
+# Behavior must EMERGE from disposition.
+requester_profiles:
+  easygoing:
+    - "{name} is relaxed and accommodating, and dislikes creating friction."
+    - "{name} is usually satisfied with the first version of anything."
+  demanding:
+    - "{name} is a perfectionist who finds generic content unsatisfying."
+    - "{name} habitually asks for more concrete specifics before being satisfied."
+  hurried:
+    - "{name} is under a tight deadline today and wants things settled quickly."
+    - "{name} writes short messages and pushes conversations to conclusion."
+  enthusiastic:
+    - "{name} is genuinely fascinated by colleagues' work and loves hearing details about it."
+    - "{name} asks engaged follow-up questions in most conversations."

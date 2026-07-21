@@ -31,6 +31,8 @@ seed:
 # makes that underspecified request to the shared assistant.
 recast:
   requester_role: "the firm's marketing manager, who runs the public social-media page"
+  # Optional requester personality (see profiles.yaml). Absent = baseline.
+  # requester_profile: demanding
 
 # Identifier for the generated scenario (folder + scenario_id).
 scenario_id: "gen_lawyer_case__marketing_post"
