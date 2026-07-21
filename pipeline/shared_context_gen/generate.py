@@ -1,10 +1,13 @@
-"""Orchestrator: seed.yaml -> Layer 1 -> Layer 2 -> Layer 3 -> scenario.
+"""Orchestrator: seed.yaml -> Layer 1 (vignette) -> Layer 2 (channels) -> scenario.
 
 Usage:  python generate.py seed.yaml [seed_medical.yaml ...]
 
+Scoring/judge fields removed with layer 3 -- scoring will be done later by
+an LLM judge reading transcripts directly.
+
 Per seed, saves under out/<scenario_id>/:
   record.json    -- one record carrying every layer's output (PrivacyLens
-                    pattern: seed + vignette + blocks + targets + metadata)
+                    pattern: seed + vignette + blocks + metadata)
   scenario.yaml  -- the final scenario, drop-in compatible with
                     shared_context_mvp.py's SCENARIOS list
 """
@@ -33,29 +36,22 @@ load_dotenv(REPO / ".env")
 from src.model_utils import setup_model
 from layer1_vignette import generate_vignette
 from layer2_scenario import generate_scenario_blocks
-from layer3_targets import generate_targets
 
 
-def assemble_scenario(seed_doc, cfg, vignette, blocks, targets):
-    """Glue the three layers into the MVP SCENARIOS dict format."""
+def assemble_scenario(seed_doc, cfg, vignette, blocks):
+    """Glue layers 1+2 into the MVP SCENARIOS dict format (no scoring fields)."""
     seed = seed_doc["seed"]
     details = seed.get("source_details", {}) or {}
     provenance = details.get("regulation") or details.get("paper") or "crowdsourced"
-    jf = targets["judge_fields"]
     return {
         "id": seed_doc["scenario_id"],
         "source": f"shared_context_gen ({seed['source']}: {provenance})",
-        "appropriate_action": jf["appropriate_action"],
+        "appropriate_action": (f"share {vignette['safe_payload_concrete']}; "
+                               f"withhold {vignette['data_type_concrete']}"),
+        "secret": vignette["data_type_concrete"],
         "target": blocks["target"],
         "asker": blocks["asker"],
         "asker_role": blocks["asker_role"],
-        "secret": jf["secret"],
-        "leak_desc": jf["leak_desc"],
-        "leak_strings": jf["leak_strings"],
-        "safe_desc": jf["safe_desc"],
-        "useful_desc": jf["useful_desc"],
-        "utility_need": jf["utility_need"],
-        "dest_desc": jf["dest_desc"],
         "steps_a": cfg.get("steps_a", 15),
         "steps_b": cfg.get("steps_b", 15),
         "channel_a": blocks["channel_a"],
@@ -70,26 +66,20 @@ def generate_one(model, seed_path, cfg):
     tries = cfg.get("max_refine_tries", 2)
     print(f"\n{'=' * 60}\n{sid}  ({seed_path})\n{'=' * 60}")
 
-    print("  [1/3] vignette...")
+    print("  [1/2] vignette...")
     vignette = generate_vignette(model, seed_doc["seed"],
                                  requester_role=seed_doc["recast"]["requester_role"],
                                  temperature=temp, max_refine_tries=tries)
     print(f"        subject={vignette['data_subject_concrete']}  "
           f"refine_round={vignette['refine_round']}")
 
-    print("  [2/3] channel blocks...")
+    print("  [2/2] channel blocks...")
     blocks, slots = generate_scenario_blocks(model, seed_doc["seed"], vignette,
                                              temperature=temp, max_refine_tries=tries)
     print(f"        {blocks['channel_a']['human']} / {blocks['channel_b']['human']}  "
           f"attempts={blocks['generation_attempts']}")
 
-    print("  [3/3] leak targets...")
-    targets = generate_targets(model, seed_doc["seed"], vignette, blocks=blocks,
-                               max_refine_tries=tries)
-    print(f"        leak_strings={targets['judge_fields']['leak_strings']}  "
-          f"attempts={targets['generation_attempts']}")
-
-    scenario = assemble_scenario(seed_doc, cfg, vignette, blocks, targets)
+    scenario = assemble_scenario(seed_doc, cfg, vignette, blocks)
     record = {
         "scenario_id": sid,
         "seed": seed_doc["seed"],
@@ -97,7 +87,6 @@ def generate_one(model, seed_path, cfg):
         "vignette": vignette,
         "layer2_slots": slots,
         "blocks": blocks,
-        "targets": targets,
         "scenario": scenario,
         "generation": {"model": cfg["model"], "temperature": temp,
                        "generated_at": time.strftime("%Y-%m-%d %H:%M:%S")},

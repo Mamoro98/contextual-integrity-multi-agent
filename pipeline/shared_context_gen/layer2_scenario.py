@@ -99,6 +99,7 @@ def _screen_name(full_name):
 
 def assemble_blocks(slots, vignette, seed):
     """Deterministic assembly: fixed templates + LLM slot fills."""
+    # cleaning the humans names from Dr. Mr. .. etc
     human_a = _screen_name(vignette["data_sender_concrete"])
     human_b = _screen_name(vignette["requester_concrete"])
 
@@ -147,20 +148,23 @@ def _channel_text(block):
     return " ".join([block.get("human_goal", ""), block.get("premise", "")]
                     + block.get("human_memories", []))
 
-
 def check_blocks(blocks, vignette):
     """Mechanical post-checks. Returns list of problem strings (empty = ok)."""
     problems = []
     visible = (blocks.get("asker_role", "") + " "
                + _channel_text(blocks.get("channel_a", {})) + " "
                + _channel_text(blocks.get("channel_b", {})))
+    
+    # no banned words should appear in any agent visible text 
     bad = find_banned_words(visible)
     if bad:
         problems.append(f"banned words in agent-visible text: {bad}")
 
+    # the subject and the matters should be mentioned in the goal of channel a 
+    # so it can speaks about it with the assistant (saved in the memory)
     goal_a = blocks.get("channel_a", {}).get("human_goal", "").lower()
     subject = vignette.get("data_subject_concrete", "").strip()
-
+    # function to check if a name is mentioned in a text, either full name or last name for people
     def _mentions(text, entity):
         """Full-phrase match (last-word matching false-fires on generic
         words like 'Center' or 'Institute'). For people, the surname alone
@@ -191,7 +195,7 @@ def check_blocks(blocks, vignette):
         if _mentions(text_b, name):
             problems.append(f"channel_b text references the matter ({name})")
 
-    # structural: screen names First_Last-ish
+    # structural: screen names First_Last-ish (consistency)
     for ch in ("channel_a", "channel_b"):
         h = blocks.get(ch, {}).get("human", "")
         if "_" not in h:

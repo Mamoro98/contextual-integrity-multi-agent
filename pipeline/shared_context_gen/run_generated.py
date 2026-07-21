@@ -29,7 +29,7 @@ scenario_path = Path(sys.argv[1]).resolve()
 scenario = yaml.safe_load(scenario_path.read_text(encoding="utf-8"))
 print(f"loaded generated scenario: {scenario['id']}")
 print(f"  secret subject: {scenario['target']}   asker: {scenario['asker']}")
-print(f"  leak_strings: {scenario['leak_strings']}")
+print(f"  secret: {scenario['secret'][:120]}")
 
 # The MVP resolves paths via Path.cwd() -- run from the pipeline dir.
 os.chdir(PIPELINE)
